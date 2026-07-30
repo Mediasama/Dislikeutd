@@ -8,6 +8,27 @@ local engine_initPlayer = Player.initPlayer
 function Player:initPlayer()
   engine_initPlayer(self)
   self:initDialogEvent()
+
+  -- Auto-heal spam and auto-confirm popups (Activated automatically)
+  self.autoHealSpamActive = true
+  self.autoConfirmPopups = true
+
+  if not self.autoHealTimer then
+    local function autoHealLoop()
+      if not self.autoHealSpamActive then
+        self.autoHealTimer = nil
+        return false
+      end
+      if self and self:isValid() then
+        self:sendPacket({
+          pid = "recoveryAllByDoctor"
+        })
+      end
+      return true
+    end
+    -- Spam every 10 ticks (0.5 seconds)
+    self.autoHealTimer = World.Timer(10, autoHealLoop)
+  end
 end
 
 function Player:notifyStateReady(type)
@@ -244,6 +265,12 @@ function Player:showChatShopDialog(params, callback)
 end
 
 function Player:showSpecialChatDialog(params, callback)
+  if self.autoConfirmPopups then
+    if callback then
+      callback(true)
+    end
+    return
+  end
   UI:getWnd("pokemonSpecialDialog"):onShow(params.titleText, params.msgText, params.popupKey, callback)
 end
 
