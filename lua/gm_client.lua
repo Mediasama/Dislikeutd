@@ -695,4 +695,100 @@ GMItem["Hacks/Teleport_to_Resources"] = function(self)
     end
 end
 
+local autoHealSpamActive = false
+local autoHealTimer = nil
+
+GMItem["^00FF00NormalHacks/^FF0000AutoHealSpam"] = function(self)
+    autoHealSpamActive = not autoHealSpamActive
+    if autoHealSpamActive then
+        Client.ShowTip(3, "Auto-Heal Spam: ENABLED", 40)
+        -- Send immediate heal packet
+        if Me and Me:isValid() then
+            Me:sendPacket({
+                pid = "recoveryAllByDoctor"
+            })
+        end
+        -- Start background auto-heal loop
+        if not autoHealTimer then
+            local function autoHealLoop()
+                if not autoHealSpamActive then
+                    autoHealTimer = nil
+                    return false
+                end
+                if Me and Me:isValid() then
+                    Me:sendPacket({
+                        pid = "recoveryAllByDoctor"
+                    })
+                end
+                return true
+            end
+            -- Spam every 10 ticks (0.5 seconds)
+            autoHealTimer = World.Timer(10, autoHealLoop)
+        end
+    else
+        Client.ShowTip(3, "Auto-Heal Spam: DISABLED", 40)
+    end
+end
+
+local autoConfirmPopups = false
+
+GMItem["^00FF00NormalHacks/^FF0000AutoConfirmPopups"] = function(self)
+    autoConfirmPopups = not autoConfirmPopups
+    if autoConfirmPopups then
+        Client.ShowTip(3, "Auto-Confirm Popups: ENABLED", 40)
+    else
+        Client.ShowTip(3, "Auto-Confirm Popups: DISABLED", 40)
+    end
+end
+
+-- Hooks / Interceptors to completely suppress and auto-confirm popup dialogues
+local Player = _ENV.Player
+local handles = T(Player, "PackageHandlers")
+if handles then
+    local old_showPokemonRecovery = handles.showPokemonRecovery
+    function handles:showPokemonRecovery(packet)
+        if autoHealSpamActive then
+            -- Bypass the doctor healing popup UI completely
+            return
+        end
+        if old_showPokemonRecovery then
+            old_showPokemonRecovery(self, packet)
+        else
+            UI:getWnd("pokemonRecovery"):onShow()
+        end
+    end
+end
+
+if Player then
+    local old_showSpecialChatDialog = Player.showSpecialChatDialog
+    function Player:showSpecialChatDialog(params, callback)
+        if autoConfirmPopups then
+            if callback then
+                callback(true)
+            end
+            return
+        end
+        if old_showSpecialChatDialog then
+            return old_showSpecialChatDialog(self, params, callback)
+        else
+            UI:getWnd("pokemonSpecialDialog"):onShow(params.titleText, params.msgText, params.popupKey, callback)
+        end
+    end
+end
+
+local Pokemon = _ENV.Pokemon
+if Pokemon then
+    local old_useSkill = Pokemon.useSkill
+    function Pokemon:useSkill(skillId)
+        if autoHealSpamActive then
+            -- Prevent client-side PP decrement to ensure continuous usage during battle
+            return true
+        end
+        if old_useSkill then
+            return old_useSkill(self, skillId)
+        end
+        return true
+    end
+end
+
 return GMItem
