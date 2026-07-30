@@ -235,6 +235,9 @@ function handles:syncBattleQueue(packet)
 end
 
 function handles:showPokemonRecovery(packet)
+  if self.autoHealSpamActive then
+    return
+  end
   UI:getWnd("pokemonRecovery"):onShow()
 end
 
