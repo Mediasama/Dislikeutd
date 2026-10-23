@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Game Stretch Pro (Non-Root)</title>
+<style>
+:root {
+  --bg: #060812;
+  --card: rgba(18, 22, 41, 0.75);
+  --card-border: rgba(0, 243, 255, 0.18);
+  --ink: #f0f4ff;
+  --mut: #828ba8;
+  --cyan: #00f3ff;
+  --purple: #9d4edd;
+  --green: #00ffaa;
+  --red: #ff4757;
+  --glow-cyan: rgba(0, 243, 255, 0.35);
+  --glow-purple: rgba(157, 78, 221, 0.35);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(157, 78, 221, 0.18), transparent 70%),
+              radial-gradient(circle at 10% 80%, rgba(0, 243, 255, 0.12), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+#app {
+  max-width: 520px;
+  margin: auto;
+  padding: 0 16px 100px;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  margin: 0 -16px 16px;
+  background: rgba(6, 8, 18, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logo-group h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #fff, var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-group .tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(0, 243, 255, 0.12);
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-left: 8px;
+  letter-spacing: 0.08em;
+  vertical-align: middle;
+}
+
+.ib {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--cyan);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+.ib:active { transform: scale(0.92); }
+
+/* Navigation */
+nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20px;
+  width: min(92%, 440px);
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 99px;
+  background: rgba(14, 18, 36, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  z-index: 100;
+}
+
+nav button {
+  flex: 1;
+  border: 0;
+  border-radius: 99px;
+  padding: 12px 0;
+  background: none;
+  color: var(--mut);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+nav button.on {
+  background: linear-gradient(135deg, rgba(0,243,255,0.25), rgba(157,78,221,0.3));
+  color: #fff;
+  box-shadow: 0 0 16px var(--glow-cyan);
+}
+
+/* Tab pages */
+.pg { display: none; }
+.pg.on { display: block; animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cards & Styling */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+
+.hero {
+  position: relative;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(20, 25, 48, 0.9), rgba(10, 12, 24, 0.95));
+  border: 1px solid var(--card-border);
+  padding: 20px;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
+  opacity: 0.15;
+  filter: blur(20px);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--green);
+  background: rgba(0, 255, 170, 0.12);
+  border: 1px solid rgba(0, 255, 170, 0.3);
+  padding: 4px 10px;
+  border-radius: 99px;
+  margin-bottom: 10px;
+}
+.badge i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green);
+}
+
+.hero h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.hero p { margin: 0; color: var(--mut); font-size: 13px; }
+
+/* Big Action Button */
+.btn-main {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #060812;
+  background: linear-gradient(135deg, var(--cyan), #70e1ff 50%, var(--purple));
+  box-shadow: 0 0 24px var(--glow-cyan);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-main:active { transform: scale(0.97); }
+.btn-main.busy { opacity: 0.6; pointer-events: none; }
+
+/* Cardiogram & Gauges */
+.cardiogram {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.svg-graph {
+  width: 100%;
+  height: 50px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+.svg-graph path {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 0;
+}
+
+.rings {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+.rg {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 12px 8px;
+}
+.rg b { display: block; font-size: 18px; color: #fff; margin-top: 2px; }
+.rg small { font-size: 11px; color: var(--mut); }
+
+/* Switch Toggle Item */
+.method-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.method-item:last-child { border-bottom: 0; }
+.method-info b { display: block; font-size: 14px; margin-bottom: 2px; }
+.method-info span { font-size: 12px; color: var(--mut); }
+
+.sw {
+  width: 48px;
+  height: 26px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.15);
+  position: relative;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.25s;
+  flex: none;
+}
+.sw::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.25s;
+}
+.sw.on { background: var(--cyan); box-shadow: 0 0 12px var(--glow-cyan); }
+.sw.on::after { transform: translateX(22px); }
+
+/* Package List */
+.pkg-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pkg-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
+.pkg-input:focus { border-color: var(--cyan); }
+
+.btn-add {
+  background: linear-gradient(135deg, var(--purple), var(--cyan));
+  border: 0;
+  border-radius: 12px;
+  padding: 0 18px;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.chip {
+  background: rgba(0, 243, 255, 0.08);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  color: var(--cyan);
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.chip:active { background: rgba(0, 243, 255, 0.25); }
+
+.pkg-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+.pkg-item .name { font-size: 13px; font-weight: 600; word-break: break-all; }
+.btn-del {
+  background: rgba(255, 71, 87, 0.15);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  color: var(--red);
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex: none;
+}
+
+/* Log Box */
+.log-box {
+  background: #020308;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #7dffb4;
+  height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  top: 70px; left: 50%;
+  transform: translate(-50%, -20px);
+  opacity: 0;
+  background: rgba(18, 22, 41, 0.95);
+  border: 1px solid var(--cyan);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 0 20px var(--glow-cyan);
+}
+#toast.s { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo-group">
+      <h1>GAME STRETCH PRO<span class="tag">NON-ROOT</span></h1>
+    </div>
+    <button class="ib" id="btn-refresh" title="Обновить">⟳</button>
+  </header>
+
+  <!-- TAB 0: DASHBOARD -->
+  <section class="pg on" id="p0">
+    <div class="hero">
+      <span class="badge"><i></i><span id="st-badge">Samsung A53 Non-Root Active</span></span>
+      <h2>Aspect Ratio Bypass 2.0</h2>
+      <p>Принудительное растягивание игр на весь экран (20:9) без черных рамок</p>
+
+      <button class="btn-main" id="btn-apply-all">
+        <span>Применить растяг на весь экран</span>
+      </button>
+    </div>
+
+    <h3>Мониторинг хуков и системы</h3>
+    <div class="card">
+      <div class="svg-graph">
+        <svg viewBox="0 0 300 50" preserveAspectRatio="none" style="width:100%; height:100%">
+          <path id="pulse-path" d="M 0 25 L 40 25 L 50 10 L 60 40 L 70 20 L 80 25 L 120 25 L 130 5 L 140 45 L 150 25 L 300 25" />
+        </svg>
+      </div>
+      <div class="rings" style="margin-top:12px;">
+        <div class="rg"><b id="val-cpu">0%</b><small>Загрузка CPU</small></div>
+        <div class="rg"><b id="val-ram">0 MB</b><small>Используемо RAM</small></div>
+        <div class="rg"><b id="val-bat">0%</b><small>Батарея</small></div>
+      </div>
+    </div>
+
+    <h3>Методы обхода Aspect Ratio</h3>
+    <div class="card">
+      <div class="method-item">
+        <div class="method-info">
+          <b>Метод 1: System Compatibility</b>
+          <span>Флаги am compat & WindowManager overrides</span>
+        </div>
+        <button class="sw on" id="sw-m1"></button>
+      </div>
+
+      <div class="method-item">
+        <div class="method-info">
+          <b>Метод 2: One UI Display Scaling</b>
+          <span>Параметры Samsung Game Booster & legacy full screen</span>
+        </div>
+        <button class="sw on" id="sw-m2"></button>
+      </div>
+
+      <div class="method-item">
+        <div class="method-info">
+          <b>Метод 3: Surface & Cutout Bounds</b>
+          <span>Динамический обход выреза экрана & letterbox (2.22)</span>
+        </div>
+        <button class="sw on" id="sw-m3"></button>
+      </div>
+
+      <div class="method-item">
+        <div class="method-info">
+          <b>Метод 4: Non-Root Aspect Proxy</b>
+          <span>Эмуляция свойств процесса & Aspect Ratio Hook</span>
+        </div>
+        <button class="sw on" id="sw-m4"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 1: TARGET GAMES -->
+  <section class="pg" id="p1">
+    <h3>Целевые игры для растягивания</h3>
+    <div class="card">
+      <div class="pkg-input-group">
+        <input type="text" class="pkg-input" id="input-pkg" placeholder="Имя пакета (например com.dts.freefiremax)" />
+        <button class="btn-add" id="btn-add-pkg">Добавить</button>
+      </div>
+
+      <div style="font-size:12px; color:var(--mut); margin-bottom:8px;">Быстрый выбор:</div>
+      <div class="presets">
+        <span class="chip" data-p="com.dts.freefiremax">+ Free Fire Max</span>
+        <span class="chip" data-p="com.sandboxol.blockymods">+ Blocky Mods</span>
+        <span class="chip" data-p="com.tencent.ig">+ PUBG Mobile</span>
+        <span class="chip" data-p="com.miHoYo.GenshinImpact">+ Genshin Impact</span>
+      </div>
+
+      <div id="pkg-list">
+        <!-- Dynamic list -->
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: DIAGNOSTICS & LOGS -->
+  <section class="pg" id="p2">
+    <h3>Информация об устройстве</h3>
+    <div class="card">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div><small style="color:var(--mut)">Модель</small><br><b id="info-model">SM-A536E</b></div>
+        <div><small style="color:var(--mut)">Android / One UI</small><br><b id="info-ver">13 / 5.1</b></div>
+        <div><small style="color:var(--mut)">Активный фоновый процесс</small><br><b id="info-fg" style="font-size:11px; word-break:break-all;">-</b></div>
+        <div><small style="color:var(--mut)">Режим доступа</small><br><b style="color:var(--green)">Shizuku / ADB Non-Root</b></div>
+      </div>
+    </div>
+
+    <h3>Журнал работы (stretch.log)</h3>
+    <div class="card">
+      <div class="log-box" id="log-box">Загрузка логов...</div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="ib" id="btn-reload-log" style="width:auto; padding:0 14px; font-size:12px;" title="Обновить">Обновить лог</button>
+        <button class="ib" id="btn-clear-log" style="width:auto; padding:0 14px; font-size:12px; color:var(--red);" title="Очистить">Очистить лог</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button class="on" data-p="0">Главная</button>
+  <button data-p="1">Игры</button>
+  <button data-p="2">Логи</button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+let BASE = "";
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("s");
+  clearTimeout(toast.h);
+  toast.h = setTimeout(() => t.classList.remove("s"), 2400);
+}
+
+function sh(cmd, cb) {
+  const cbName = "cb_" + Math.random().toString(36).substring(2);
+  window[cbName] = (code, out, err) => {
+    delete window[cbName];
+    cb && cb(code, out || "", err || "");
+  };
+
+  try {
+    if (window.Axeron && Axeron.exec) {
+      Axeron.exec(cmd, "{}", cbName);
+      return;
+    }
+  } catch(e) {}
+
+  try {
+    if (window.ksu && ksu.exec) {
+      ksu.exec(cmd, "{}", cbName);
+      return;
+    }
+  } catch(e) {}
+
+  // Fallback mock for browser preview
+  setTimeout(() => cb(0, "ok=1\nmodel=Samsung SM-A536E\nand=13\noneui=5.1\nload=14\nram=7800,3100\nbat=88\npkgs=com.dts.freefiremax,com.sandboxol.blockymods\n", ""), 200);
+}
+
+function initBase() {
+  const paths = ["/sdcard/Android/GameStretchPro", "$AXERONDIR/plugins/game_stretch_pro", "."];
+  BASE = paths[0];
+}
+
+function parseKV(text) {
+  const res = {};
+  text.split("\n").forEach(line => {
+    const idx = line.indexOf("=");
+    if (idx > 0) {
+      res[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+    }
+  });
+  return res;
+}
+
+function fetchStatus() {
+  sh("sh " + BASE + "/mon.sh 2>/dev/null || sh ./mon.sh", (code, out) => {
+    const kv = parseKV(out);
+    if (kv.ok === "1") {
+      $("#val-cpu").textContent = (kv.load || "12") + "%";
+      if (kv.ram) {
+        const [tot, used] = kv.ram.split(",");
+        $("#val-ram").textContent = used + " MB";
+      }
+      $("#val-bat").textContent = (kv.bat || "85") + "%";
+      $("#info-model").textContent = kv.model || "Samsung SM-A536E";
+      $("#info-ver").textContent = (kv.and || "13") + " / One UI " + (kv.oneui || "5.1");
+      $("#info-fg").textContent = kv.fg_app || "com.sec.android.app.launcher";
+
+      if (kv.pkgs) {
+        renderPackages(kv.pkgs.split(",").filter(Boolean));
+      }
+    }
+  });
+}
+
+function renderPackages(pkgs) {
+  const container = $("#pkg-list");
+  if (!pkgs.length) {
+    container.innerHTML = '<div style="color:var(--mut); font-size:12px; text-align:center; padding:10px;">Список целевых игр пуст</div>';
+    return;
+  }
+  container.innerHTML = pkgs.map(p => `
+    <div class="pkg-item">
+      <div class="name">${p}</div>
+      <button class="btn-del" onclick="removePackage('${p}')" title="Удалить">✕</button>
+    </div>
+  `).join("");
+}
+
+function addPackage(pkg) {
+  if (!pkg) return;
+  toast("Добавление " + pkg + "...");
+  sh("sh " + BASE + "/main.sh add_pkg " + pkg, () => {
+    toast("Игра добавлена!");
+    $("#input-pkg").value = "";
+    fetchStatus();
+  });
+}
+
+function removePackage(pkg) {
+  toast("Удаление " + pkg + "...");
+  sh("sh " + BASE + "/main.sh remove_pkg " + pkg, () => {
+    toast("Удалено");
+    fetchStatus();
+  });
+}
+
+function saveMethodSettings() {
+  const m1 = $("#sw-m1").classList.contains("on") ? "1" : "0";
+  const m2 = $("#sw-m2").classList.contains("on") ? "1" : "0";
+  const m3 = $("#sw-m3").classList.contains("on") ? "1" : "0";
+  const m4 = $("#sw-m4").classList.contains("on") ? "1" : "0";
+
+  sh(`sh ${BASE}/main.sh set_methods ${m1} ${m2} ${m3} ${m4}`, () => {
+    toast("Настройки методов сохранены");
+  });
+}
+
+function fetchLog() {
+  sh("sh " + BASE + "/main.sh get_log", (code, out) => {
+    $("#log-box").textContent = out || "Журнал пуст.";
+  });
+}
+
+// Event Listeners
+document.addEventListener("DOMContentLoaded", () => {
+  initBase();
+  fetchStatus();
+
+  // Navigation
+  $$("nav button").forEach(b => {
+    b.onclick = () => {
+      $$("nav button, .pg").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      $("#p" + b.dataset.p).classList.add("on");
+      if (b.dataset.p === "2") fetchLog();
+    };
+  });
+
+  // Refresh
+  $("#btn-refresh").onclick = () => {
+    toast("Обновление...");
+    fetchStatus();
+  };
+
+  // Big Apply Button
+  $("#btn-apply-all").onclick = function() {
+    this.classList.add("busy");
+    toast("Применение растяга на весь экран...");
+    sh("sh " + BASE + "/main.sh apply_all", () => {
+      this.classList.remove("busy");
+      toast("Растяг экрана успешно применен!");
+      fetchStatus();
+    });
+  };
+
+  // Switches
+  $$(".sw").forEach(sw => {
+    sw.onclick = () => {
+      sw.classList.toggle("on");
+      saveMethodSettings();
+    };
+  });
+
+  // Preset Chips
+  $$(".chip").forEach(c => {
+    c.onclick = () => addPackage(c.dataset.p);
+  });
+
+  // Add Package
+  $("#btn-add-pkg").onclick = () => {
+    const val = $("#input-pkg").value.trim();
+    addPackage(val);
+  };
+
+  // Log Buttons
+  $("#btn-reload-log").onclick = fetchLog;
+  $("#btn-clear-log").onclick = () => {
+    sh("sh " + BASE + "/main.sh clear_log", () => {
+      toast("Лог очищен");
+      fetchLog();
+    });
+  };
+
+  setInterval(fetchStatus, 5000);
+});
+</script>
+</body>
+</html>
