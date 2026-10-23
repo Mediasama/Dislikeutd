@@ -1,0 +1,7 @@
+id=game_stretch_pro
+name=Game Stretch Pro (Non-Root)
+version=2.0
+versionCode=200
+author=Jules & User
+description=Продвинутый инструмент для обхода Aspect Ratio и растягивания игр на весь экран на Android 13 (Samsung A53).
+axeronPlugin=10000
