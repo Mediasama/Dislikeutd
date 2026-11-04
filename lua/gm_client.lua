@@ -696,6 +696,112 @@ GMItem["Hacks/Teleport_to_Resources"] = function(self)
 end
 
 -- =========================================================================
+-- DEBUG ENVIRONMENT, PACKET LOGGER & LATENCY INJECTION (Vector 2 & 3)
+-- (Перенесено в gm_client.lua, script_client/main.lua оставлен чистым)
+-- =========================================================================
+DebugEnv = DebugEnv or {}
+DebugEnv.packetLogEnabled = false
+DebugEnv.latencyMs = 0 -- Задержка в мс (0 = выключено)
+DebugEnv.packetHistory = {}
+DebugEnv.maxHistory = 100
+
+function DebugEnv:logPacket(direction, packet)
+  if not self.packetLogEnabled then
+    return
+  end
+  local record = {
+    time = os.time(),
+    direction = direction, -- "OUT" or "IN"
+    pid = packet and packet.pid or "unknown",
+    data = packet
+  }
+  table.insert(self.packetHistory, record)
+  if #self.packetHistory > self.maxHistory then
+    table.remove(self.packetHistory, 1)
+  end
+  print(string.format("[DebugEnv Network][%s] PID: %s | Payload: %s", direction, tostring(record.pid), Lib.v2s and Lib.v2s(packet, 2) or tostring(packet)))
+end
+
+function DebugEnv:setPacketLogEnabled(enable)
+  self.packetLogEnabled = enable
+  print(string.format("[DebugEnv] Packet logging set to: %s", tostring(enable)))
+end
+
+function DebugEnv:setLatency(ms)
+  self.latencyMs = tonumber(ms) or 0
+  print(string.format("[DebugEnv] Latency injection set to: %d ms", self.latencyMs))
+end
+
+if not DebugEnv.hooked and Player and Player.sendPacket then
+  local raw_sendPacket = Player.sendPacket
+  function Player:sendPacket(packet, callBack)
+    if DebugEnv.packetLogEnabled then
+      DebugEnv:logPacket("OUT", packet)
+    end
+
+    if DebugEnv.latencyMs and DebugEnv.latencyMs > 0 then
+      local ticks = math.max(1, math.floor(DebugEnv.latencyMs / 50))
+      World.Timer(ticks, function()
+        raw_sendPacket(self, packet, callBack)
+      end)
+    else
+      raw_sendPacket(self, packet, callBack)
+    end
+  end
+
+  if Player.PackageHandlers then
+    local raw_pushLuckyEggResult = Player.PackageHandlers.pushLuckyEggResult
+    if raw_pushLuckyEggResult then
+      Player.PackageHandlers.pushLuckyEggResult = function(player, packet)
+        if DebugEnv.packetLogEnabled then
+          DebugEnv:logPacket("IN", packet)
+        end
+        raw_pushLuckyEggResult(player, packet)
+      end
+    end
+
+    local raw_receiveLuckyExtraSuccess = Player.PackageHandlers.receiveLuckyExtraSuccess
+    if raw_receiveLuckyExtraSuccess then
+      Player.PackageHandlers.receiveLuckyExtraSuccess = function(player, packet)
+        if DebugEnv.packetLogEnabled then
+          DebugEnv:logPacket("IN", packet)
+        end
+        raw_receiveLuckyExtraSuccess(player, packet)
+      end
+    end
+  end
+  DebugEnv.hooked = true
+end
+
+function DebugEnv:simulateTakeCount(poolId, count)
+  local luckyEggInfo = Me:getLuckyEggInfo()
+  luckyEggInfo[poolId] = luckyEggInfo[poolId] or {}
+  luckyEggInfo[poolId].totalTakeCounts = count
+  Me:setLuckyEggInfo(luckyEggInfo)
+  Lib.emitEvent(Event.EVENT_UPDATE_LUCKY_EGG_INFO)
+  print(string.format("[DebugEnv] Initialized totalTakeCounts for pool %s to %d", tostring(poolId), count))
+end
+
+function DebugEnv:batchClaimMilestones(poolId)
+  local luckyEggInfo = Me:getLuckyEggInfo()
+  local curCount = (luckyEggInfo[poolId] and luckyEggInfo[poolId].totalTakeCounts) or 0
+  local PokemonLuckyExtraConfig = T(Config, "PokemonLuckyExtraConfig")
+  local extraData = PokemonLuckyExtraConfig:getDataByPoolId(poolId)
+  local claimed = 0
+  for _, item in pairs(extraData or {}) do
+    if curCount >= item.take_count then
+      Me:sendPacket({
+        pid = "receiveLuckyEggExtraAward",
+        extraId = item.id
+      })
+      claimed = claimed + 1
+      print(string.format("[DebugEnv] Dispatched claim for milestone extraId: %s (take_count: %d, pkm_id: %s)", tostring(item.id), item.take_count, tostring(item.pkm_id)))
+    end
+  end
+  print(string.format("[DebugEnv] Total milestones claimed in batch for pool %s: %d", tostring(poolId), claimed))
+end
+
+-- =========================================================================
 -- GM ОТЛАДКА И ТЕСТИРОВАНИЕ: ИНСТРУМЕНТЫ, КАТАЛОГИ И ОПЦИИ РАЗРАБОТЧИКА
 -- =========================================================================
 
@@ -837,14 +943,40 @@ end
 local flashPoolHooked = false
 local mockFlashActive = true
 
+-- Функция установки активного времени для Flash Tab и на сервере, и на клиенте
+local function activateFlashPoolTime()
+    mockFlashActive = true
+    if World and World.cfg then
+        World.cfg.luckyEggFlashEndTime = {
+            year = 2035,
+            month = 1,
+            day = 1,
+            hour = 0,
+            min = 0,
+            sec = 0
+        }
+    end
+    local wnd = UI:getWnd("pokemonLuckyEgg")
+    if wnd then
+        wnd.getFlashTabRemainTime = function(instance)
+            return 86400 * 365
+        end
+        flashPoolHooked = true
+    end
+    print("[FlashPool] Extended luckyEggFlashEndTime to year 2035 and hooked UI remain time.")
+end
+
+GMItem["Вектор_1_FlashPool/Продлить_Время_FlashTab_до_2035_года"] = function(self)
+    activateFlashPoolTime()
+end
+
 GMItem["Вектор_1_FlashPool/Переключить_видимость_FlashTab"] = function(self)
     mockFlashActive = not mockFlashActive
     local wnd = UI:getWnd("pokemonLuckyEgg")
     if not flashPoolHooked and wnd then
-        local raw_getFlashTabRemainTime = wnd.getFlashTabRemainTime
         wnd.getFlashTabRemainTime = function(instance)
             if mockFlashActive then
-                return 86400 -- Возвращаем 24 часа активности для теста
+                return 86400 * 30
             else
                 return 0
             end
@@ -860,16 +992,10 @@ GMItem["Вектор_1_FlashPool/Переключить_видимость_Flash
 end
 
 GMItem["Вектор_1_FlashPool/Принудительно_открыть_Flash_Пул"] = function(self)
-    mockFlashActive = true
+    activateFlashPoolTime()
     UI:openWnd("pokemonLuckyEgg")
     local wnd = UI:getWnd("pokemonLuckyEgg")
     if wnd then
-        if not flashPoolHooked then
-            wnd.getFlashTabRemainTime = function(instance)
-                return 86400
-            end
-            flashPoolHooked = true
-        end
         wnd.curSelectTab = Define.LuckyEggTabType.flashTab
         wnd:updateTabBtnShow()
         wnd:updateTabViewShow()
@@ -878,7 +1004,7 @@ GMItem["Вектор_1_FlashPool/Принудительно_открыть_Flash
 end
 
 GMItem["Вектор_1_FlashPool/Симуляция_Крутки_Резерв_Валюты_x1"] = function(self)
-    -- Вектор 1: Если у тестера отсутствуют item_ticket_01, задействуем механизм pokemon_lucky_price.csv (n_currencyType=0, payCurrency/gDiamonds)
+    activateFlashPoolTime()
     local priceData = T(Config, "PokemonLuckyPriceConfig"):getDataByPoolIdAndTakeType(Define.LuckyEggTabType.flashTab, 0)
     local bagTicketNum = Me:getTrayItemCountByFullName(priceData.fullName)
     print(string.format("[LuckyDraw Test] Ticket count: %d, required: %d, currencyType: %d, price: %d",
@@ -894,6 +1020,7 @@ GMItem["Вектор_1_FlashPool/Симуляция_Крутки_Резерв_В
 end
 
 GMItem["Вектор_1_FlashPool/Симуляция_Крутки_Резерв_Валюты_x10"] = function(self)
+    activateFlashPoolTime()
     local priceData = T(Config, "PokemonLuckyPriceConfig"):getDataByPoolIdAndTakeType(Define.LuckyEggTabType.flashTab, 1)
     local bagTicketNum = Me:getTrayItemCountByFullName(priceData.fullName)
     print(string.format("[LuckyDraw Test x10] Ticket count: %d, required: %d, currencyType: %d, price: %d",
@@ -1042,34 +1169,51 @@ GMItem["^FFFF00ULTRA_pup/UTicket"] = function()
 end
 
 -- Специальные лимитированные билеты (item_ticket_01) для пула 1 (Апофис, Валькирия и др.)
--- В заданиях task 1-24 нет item_ticket_01. Поэтому предоставляем прямой способ и альтернативные варианты:
 GMItem["^FFFF00ULTRA_pup/SpecialTicket"] = function()
-    -- Метод 1: Прямое добавление в трей/инвентарь игрока
-    if Me.obtainItemsByFullName then
-        pcall(function()
-            Me:obtainItemsByFullName("myplugin/item_ticket_01", 100, "gm_ticket")
-        end)
-    end
-    -- Метод 2: Покупка/получение через пакет регулярных наборов (good 105 из regular_gift_item = 30x item_ticket_01)
-    for i = 1, 4 do
-        Me:sendPacket({
-            pid = "requestBugRegularGift",
-            itemId = 10020,
-            buyCount = 1
-        })
-    end
-    -- Метод 3: Начисление gDiamonds для прямой крутки без тикетов (pokemon_lucky_price.csv fallback: 50 / 500 gDiamonds)
+    -- 1. Гарантированно активируем время Flash пула, чтобы гача не выдавала 'pushLuckyEggFail'
+    activateFlashPoolTime()
+
+    -- 2. Добавляем в клиентский трей (для отображения в окне гачи)
+    pcall(function()
+        if Me.tray then
+            local my_tray = Me:tray():fetch_tray(Define.TRAY_TYPE.BAG)
+            if my_tray and my_tray.add_item then
+                my_tray:add_item("myplugin/item_ticket_01", 100)
+            end
+        end
+    end)
+
+    -- 3. Восполняем баланс gDiamonds (1,000,000 кубов), чтобы списание валюты не тратило реальный донат
     if PlayerWallet and PlayerWallet.setMoneyCount then
         pcall(function()
-            PlayerWallet:setMoneyCount("gDiamonds", 1000000)
+            PlayerWallet:setMoneyCount("gDiamonds", 10000000)
         end)
     end
-    print("[Ticket GM] Dispatched Special Limited Tickets (myplugin/item_ticket_01) & fallback currency balance.")
+
+    -- 4. Отправляем пакеты заданий и покупок наборов
+    pcall(function()
+        for i = 1, 4 do
+            Me:sendPacket({
+                pid = "requestBugRegularGift",
+                itemId = 10020,
+                buyCount = 1
+            })
+        end
+    end)
+    print("[Ticket GM] Dispatched Special Limited Tickets (myplugin/item_ticket_01), extended Flash time, and restored 10M gDiamonds.")
 end
 
 -- Дубликат в меню Вектор 1 для удобства
 GMItem["Вектор_1_FlashPool/Выдать_Спец_Тикеты_Flash_(item_ticket_01)"] = function(self)
     GMItem["^FFFF00ULTRA_pup/SpecialTicket"]()
+end
+
+-- Восполнение донатной валюты (gDiamonds / fDiamonds)
+GMItem["^FFFF00ULTRA_pup/Add_Free_gDiamonds_10M"] = function(self)
+    if PlayerWallet and PlayerWallet.setMoneyCount then
+        PlayerWallet:setMoneyCount("gDiamonds", 10000000)
+    end
+    print("[Wallet GM] Added 10,000,000 test gDiamonds.")
 end
 
 return GMItem
