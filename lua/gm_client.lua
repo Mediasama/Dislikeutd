@@ -695,4 +695,324 @@ GMItem["Hacks/Teleport_to_Resources"] = function(self)
     end
 end
 
+-- =========================================================================
+-- GM ОТЛАДКА И ТЕСТИРОВАНИЕ: ИНСТРУМЕНТЫ, КАТАЛОГИ И ОПЦИИ РАЗРАБОТЧИКА
+-- =========================================================================
+
+-- Вспомогательная функция спавна/просмотра тестовой сущности
+local function spawnDebugEntity(cfgId, customName)
+    local PokemonConfig = T(Config, "PokemonConfig")
+    local pkmCfg = PokemonConfig:getConfigById(cfgId)
+    local fullName = pkmCfg and pkmCfg.fullName or ("myplugin/pet_" .. cfgId)
+    local entityCfg = Entity.GetCfg(fullName)
+    local pos = Me:getPosition()
+    local spawnPos = Lib.v3(pos.x + 2, pos.y, pos.z + 2)
+
+    Game.EntitySpawn(Me, {
+        objID = nextObjectID,
+        cfgName = fullName,
+        actorName = (entityCfg and entityCfg.actorName) or (pkmCfg and pkmCfg.model) or "boy.actor",
+        pos = spawnPos,
+        name = customName or (pkmCfg and Lang:toText(pkmCfg.nameKey or "")) or tostring(cfgId),
+        curHp = 100,
+        rideOnId = 0,
+    }, function(entity)
+        if entity then
+            entity.isMovieEntity = true
+            if entity.updateHeadInfo then
+                entity:updateHeadInfo()
+            end
+            print(string.format("[DebugSpawn] Entity spawned: ID %s (%s) at objID: %s", tostring(cfgId), tostring(customName), tostring(nextObjectID)))
+        end
+    end)
+    nextObjectID = nextObjectID + 1
+end
+
+-- -------------------------------------------------------------------------
+-- 1. КАТАЛОГИЗАЦИЯ СКРЫТЫХ ТЕСТОВЫХ ЭНТИТИ И ПРОТОТИПОВ
+-- -------------------------------------------------------------------------
+
+-- Категория А: Лимитированные энтити тестовых пулов (Pool 1 / Flash-сессии)
+GMItem["Тест_Сущности/Категория_А/10500501 - Апофис (Pool 1 - 250 круток)"] = function(self)
+    spawnDebugEntity(10500501, "Apophis [Апофис]")
+end
+
+GMItem["Тест_Сущности/Категория_А/10301301 - Валькирия (Pool 1 - 500 круток)"] = function(self)
+    spawnDebugEntity(10301301, "Valkyrja [Валькирия]")
+end
+
+GMItem["Тест_Сущности/Категория_А/10500401 - Варус (Pool 1 Доп. слот)"] = function(self)
+    spawnDebugEntity(10500401, "Varus [Варус]")
+end
+
+GMItem["Тест_Сущности/Категория_А/10301401 - Карнал (Pool 1 Доп. слот)"] = function(self)
+    spawnDebugEntity(10301401, "Karnal [Карнал]")
+end
+
+-- Категория Б: Элитные отладочные сущности (Pool 2 / Картографические модули)
+GMItem["Тест_Сущности/Категория_Б/10501501 - Little Edas (Элитный пул)"] = function(self)
+    spawnDebugEntity(10501501, "Little Edas [Маленькая Эдас]")
+end
+
+GMItem["Тест_Сущности/Категория_Б/10501502 - Edas (Элитный пул)"] = function(self)
+    spawnDebugEntity(10501502, "Edas [Эдас]")
+end
+
+GMItem["Тест_Сущности/Категория_Б/10200901 - Kulos (Элитный пул)"] = function(self)
+    spawnDebugEntity(10200901, "Kulos [Кулос]")
+end
+
+GMItem["Тест_Сущности/Категория_Б/10100801 - Dark Fang (Карты 5-6)"] = function(self)
+    spawnDebugEntity(10100801, "Dark Fang [Темный клык]")
+end
+
+GMItem["Тест_Сущности/Категория_Б/10100802 - Black Claw (Карты 5-6)"] = function(self)
+    spawnDebugEntity(10100802, "Black Claw [Черный коготь]")
+end
+
+GMItem["Тест_Сущности/Категория_Б/10100901 - Little Ali (Карты 5-6)"] = function(self)
+    spawnDebugEntity(10100901, "Little Ali [Маленький Али]")
+end
+
+GMItem["Тест_Сущности/Категория_Б/10100902 - Ali (Карты 5-6)"] = function(self)
+    spawnDebugEntity(10100902, "Ali [Али]")
+end
+
+-- Категория В: Резервные / невыпущенные прототипы из исходных файлов
+GMItem["Тест_Сущности/Категория_В/1 - Чармандер"] = function(self)
+    spawnDebugEntity(1, "Charmander [Чармандер]")
+end
+
+GMItem["Тест_Сущности/Категория_В/2 - Чармелеон"] = function(self)
+    spawnDebugEntity(2, "Charmeleon [Чармелеон]")
+end
+
+GMItem["Тест_Сущности/Категория_В/3 - Чаризард"] = function(self)
+    spawnDebugEntity(3, "Charizard [Чаризард]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10400901 - Дин-а-линг"] = function(self)
+    spawnDebugEntity(10400901, "Ding-a-ling [Дин-а-линг]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10400902 - Эл"] = function(self)
+    spawnDebugEntity(10400902, "El [Эл]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10401301 - Эмир"] = function(self)
+    spawnDebugEntity(10401301, "Emir [Эмир]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10201101 - Лофи"] = function(self)
+    spawnDebugEntity(10201101, "Lofi [Лофи]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10201102 - Лорд"] = function(self)
+    spawnDebugEntity(10201102, "Lord [Лорд]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10300901 - Рафаэль (1)"] = function(self)
+    spawnDebugEntity(10300901, "Raphael [Рафаэль 1]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10300902 - Рафаэль (2)"] = function(self)
+    spawnDebugEntity(10300902, "Raphael [Рафаэль 2]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10100401 - Птица в небе"] = function(self)
+    spawnDebugEntity(10100401, "Sky Bird [Птица в небе]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10401201 - Куру"] = function(self)
+    spawnDebugEntity(10401201, "Kuru [Куру]")
+end
+
+GMItem["Тест_Сущности/Категория_В/10100702 - Бебелла"] = function(self)
+    spawnDebugEntity(10100702, "Bebella [Бебелла]")
+end
+
+-- -------------------------------------------------------------------------
+-- 2. ВЕКТОР 1: УПРАВЛЕНИЕ ТАЙМЕРАМИ И СЕССИЯМИ FLASH POOL TAB (win_pokemonLuckyEgg)
+-- -------------------------------------------------------------------------
+local flashPoolHooked = false
+local mockFlashActive = true
+
+GMItem["Вектор_1_FlashPool/Переключить_видимость_FlashTab"] = function(self)
+    mockFlashActive = not mockFlashActive
+    local wnd = UI:getWnd("pokemonLuckyEgg")
+    if not flashPoolHooked and wnd then
+        local raw_getFlashTabRemainTime = wnd.getFlashTabRemainTime
+        wnd.getFlashTabRemainTime = function(instance)
+            if mockFlashActive then
+                return 86400 -- Возвращаем 24 часа активности для теста
+            else
+                return 0
+            end
+        end
+        flashPoolHooked = true
+    end
+
+    if wnd and UI:isOpen("pokemonLuckyEgg") then
+        wnd:updateTabBtnShow()
+        wnd:startFlashTabDownTime()
+    end
+    print(string.format("[FlashPool] Mock FlashTab state set to: %s", tostring(mockFlashActive)))
+end
+
+GMItem["Вектор_1_FlashPool/Принудительно_открыть_Flash_Пул"] = function(self)
+    mockFlashActive = true
+    UI:openWnd("pokemonLuckyEgg")
+    local wnd = UI:getWnd("pokemonLuckyEgg")
+    if wnd then
+        if not flashPoolHooked then
+            wnd.getFlashTabRemainTime = function(instance)
+                return 86400
+            end
+            flashPoolHooked = true
+        end
+        wnd.curSelectTab = Define.LuckyEggTabType.flashTab
+        wnd:updateTabBtnShow()
+        wnd:updateTabViewShow()
+    end
+    print("[FlashPool] Force opened PokemonLuckyEgg on Flash Pool Tab.")
+end
+
+GMItem["Вектор_1_FlashPool/Симуляция_Крутки_Резерв_Валюты_x1"] = function(self)
+    -- Вектор 1: Если у тестера отсутствуют item_ticket_01, задействуем механизм pokemon_lucky_price.csv (n_currencyType=0, payCurrency/gDiamonds)
+    local priceData = T(Config, "PokemonLuckyPriceConfig"):getDataByPoolIdAndTakeType(Define.LuckyEggTabType.flashTab, 0)
+    local bagTicketNum = Me:getTrayItemCountByFullName(priceData.fullName)
+    print(string.format("[LuckyDraw Test] Ticket count: %d, required: %d, currencyType: %d, price: %d",
+        bagTicketNum, priceData.ticket_count, priceData.currencyType, priceData.currency_count))
+    if bagTicketNum < priceData.ticket_count then
+        print("[LuckyDraw Test] No tickets available. Using fallback direct currency simulation (n_currencyType=0 / payCurrency / gDiamonds).")
+    end
+    Me:sendPacket({
+        pid = "takeLuckyEggAward",
+        tabType = Define.LuckyEggTabType.flashTab,
+        takeType = 0
+    })
+end
+
+GMItem["Вектор_1_FlashPool/Симуляция_Крутки_Резерв_Валюты_x10"] = function(self)
+    local priceData = T(Config, "PokemonLuckyPriceConfig"):getDataByPoolIdAndTakeType(Define.LuckyEggTabType.flashTab, 1)
+    local bagTicketNum = Me:getTrayItemCountByFullName(priceData.fullName)
+    print(string.format("[LuckyDraw Test x10] Ticket count: %d, required: %d, currencyType: %d, price: %d",
+        bagTicketNum, priceData.ticket_count, priceData.currencyType, priceData.currency_count))
+    if bagTicketNum < priceData.ticket_count then
+        print("[LuckyDraw Test x10] No tickets available. Fallback: direct simulation.")
+    end
+    Me:sendPacket({
+        pid = "takeLuckyEggAward",
+        tabType = Define.LuckyEggTabType.flashTab,
+        takeType = 1
+    })
+end
+
+-- -------------------------------------------------------------------------
+-- 3. ВЕКТОР 2: ТЕСТИРОВАНИЕ ТРИГГЕРОВ КОНТРОЛЬНЫХ ТОЧЕК (Milestone Extra Awards)
+-- -------------------------------------------------------------------------
+GMItem["Вектор_2_Milestones/Установить_Счетчик_Flash_250_(Апофис)"] = function(self)
+    if DebugEnv and DebugEnv.simulateTakeCount then
+        DebugEnv:simulateTakeCount(Define.LuckyEggTabType.flashTab, 250)
+    else
+        local luckyEggInfo = Me:getLuckyEggInfo()
+        luckyEggInfo[Define.LuckyEggTabType.flashTab] = luckyEggInfo[Define.LuckyEggTabType.flashTab] or {}
+        luckyEggInfo[Define.LuckyEggTabType.flashTab].totalTakeCounts = 250
+        Me:setLuckyEggInfo(luckyEggInfo)
+        Lib.emitEvent(Event.EVENT_UPDATE_LUCKY_EGG_INFO)
+    end
+    print("[Milestone] Set Flash totalTakeCounts = 250 (Apophis trigger).")
+end
+
+GMItem["Вектор_2_Milestones/Установить_Счетчик_Flash_500_(Валькирия)"] = function(self)
+    if DebugEnv and DebugEnv.simulateTakeCount then
+        DebugEnv:simulateTakeCount(Define.LuckyEggTabType.flashTab, 500)
+    else
+        local luckyEggInfo = Me:getLuckyEggInfo()
+        luckyEggInfo[Define.LuckyEggTabType.flashTab] = luckyEggInfo[Define.LuckyEggTabType.flashTab] or {}
+        luckyEggInfo[Define.LuckyEggTabType.flashTab].totalTakeCounts = 500
+        Me:setLuckyEggInfo(luckyEggInfo)
+        Lib.emitEvent(Event.EVENT_UPDATE_LUCKY_EGG_INFO)
+    end
+    print("[Milestone] Set Flash totalTakeCounts = 500 (Valkyrja trigger).")
+end
+
+GMItem["Вектор_2_Milestones/Забрать_Чекпоинт_10009_(Апофис)"] = function(self)
+    Me:sendPacket({
+        pid = "receiveLuckyEggExtraAward",
+        extraId = 10009
+    })
+    print("[Milestone] Dispatched receiveLuckyEggExtraAward for 10009 (Apophis).")
+end
+
+GMItem["Вектор_2_Milestones/Забрать_Чекпоинт_10014_(Валькирия)"] = function(self)
+    Me:sendPacket({
+        pid = "receiveLuckyEggExtraAward",
+        extraId = 10014
+    })
+    print("[Milestone] Dispatched receiveLuckyEggExtraAward for 10014 (Valkyrja).")
+end
+
+GMItem["Вектор_2_Milestones/Пакетная_выдача_всех_доступных_наград_Flash"] = function(self)
+    if DebugEnv and DebugEnv.batchClaimMilestones then
+        DebugEnv:batchClaimMilestones(Define.LuckyEggTabType.flashTab)
+    else
+        local luckyEggInfo = Me:getLuckyEggInfo()
+        local curCount = (luckyEggInfo[Define.LuckyEggTabType.flashTab] and luckyEggInfo[Define.LuckyEggTabType.flashTab].totalTakeCounts) or 0
+        local PokemonLuckyExtraConfig = T(Config, "PokemonLuckyExtraConfig")
+        local extraData = PokemonLuckyExtraConfig:getDataByPoolId(Define.LuckyEggTabType.flashTab)
+        for _, item in pairs(extraData or {}) do
+            if curCount >= item.take_count then
+                Me:sendPacket({
+                    pid = "receiveLuckyEggExtraAward",
+                    extraId = item.id
+                })
+            end
+        end
+    end
+end
+
+-- -------------------------------------------------------------------------
+-- 4. ВЕКТОР 3: СТРЕСС-ТЕСТИРОВАНИЕ СИНХРОНИЗАЦИИ ИНВЕНТАРЯ И ЛОГИРОВАНИЕ
+-- -------------------------------------------------------------------------
+GMItem["Вектор_3_Network/Переключить_Логирование_Пакетов"] = function(self)
+    if DebugEnv then
+        DebugEnv:setPacketLogEnabled(not DebugEnv.packetLogEnabled)
+    else
+        print("[DebugEnv] DebugEnv module not ready.")
+    end
+end
+
+GMItem["Вектор_3_Network/Эмуляция_Задержки_0ms_(Откл)"] = function(self)
+    if DebugEnv then
+        DebugEnv:setLatency(0)
+    end
+end
+
+GMItem["Вектор_3_Network/Эмуляция_Задержки_200ms"] = function(self)
+    if DebugEnv then
+        DebugEnv:setLatency(200)
+    end
+end
+
+GMItem["Вектор_3_Network/Эмуляция_Задержки_500ms"] = function(self)
+    if DebugEnv then
+        DebugEnv:setLatency(500)
+    end
+end
+
+GMItem["Вектор_3_Network/Стресс_тест_Синхронизации_Box_Pets_x20"] = function(self)
+    print("[StressTest] Executing 20 rapid inventory & extra check calls to verify Box Pets sync...")
+    for i = 1, 20 do
+        World.Timer(i, function()
+            Me:sendPacket({
+                pid = "requestCurServerTime"
+            })
+            local boxPets = Me:getValue("packetPetList") or {}
+            print(string.format("[StressTest Iteration %d] Client Box Pets count: %d", i, #boxPets))
+            return false
+        end)
+    end
+end
+
 return GMItem
