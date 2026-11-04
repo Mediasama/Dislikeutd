@@ -1015,4 +1015,61 @@ GMItem["Вектор_3_Network/Стресс_тест_Синхронизации_
     end
 end
 
+-- -------------------------------------------------------------------------
+-- 5. ULTRA_pup / ВЫДАЧА ТИКЕТОВ ГАЧИ (ETicket, UTicket, SpecialTicket)
+-- -------------------------------------------------------------------------
+
+-- Элитные билеты (item_ticket_02) из ежедневного задания taskid = 24
+GMItem["^FFFF00ULTRA_pup/ETicket"] = function()
+    for i = 1, 100 do
+        Me:sendPacket({
+            pid = "GetTaskReward",
+            taskid = 24
+        })
+    end
+    print("[Ticket GM] Sent 100x GetTaskReward for taskid 24 (item_ticket_02 Elite Ticket).")
+end
+
+-- Стандартные / универсальные билеты (item_ticket_03) из ежедневного задания taskid = 16
+GMItem["^FFFF00ULTRA_pup/UTicket"] = function()
+    for i = 1, 100 do
+        Me:sendPacket({
+            pid = "GetTaskReward",
+            taskid = 16
+        })
+    end
+    print("[Ticket GM] Sent 100x GetTaskReward for taskid 16 (item_ticket_03 Universal Ticket).")
+end
+
+-- Специальные лимитированные билеты (item_ticket_01) для пула 1 (Апофис, Валькирия и др.)
+-- В заданиях task 1-24 нет item_ticket_01. Поэтому предоставляем прямой способ и альтернативные варианты:
+GMItem["^FFFF00ULTRA_pup/SpecialTicket"] = function()
+    -- Метод 1: Прямое добавление в трей/инвентарь игрока
+    if Me.obtainItemsByFullName then
+        pcall(function()
+            Me:obtainItemsByFullName("myplugin/item_ticket_01", 100, "gm_ticket")
+        end)
+    end
+    -- Метод 2: Покупка/получение через пакет регулярных наборов (good 105 из regular_gift_item = 30x item_ticket_01)
+    for i = 1, 4 do
+        Me:sendPacket({
+            pid = "requestBugRegularGift",
+            itemId = 10020,
+            buyCount = 1
+        })
+    end
+    -- Метод 3: Начисление gDiamonds для прямой крутки без тикетов (pokemon_lucky_price.csv fallback: 50 / 500 gDiamonds)
+    if PlayerWallet and PlayerWallet.setMoneyCount then
+        pcall(function()
+            PlayerWallet:setMoneyCount("gDiamonds", 1000000)
+        end)
+    end
+    print("[Ticket GM] Dispatched Special Limited Tickets (myplugin/item_ticket_01) & fallback currency balance.")
+end
+
+-- Дубликат в меню Вектор 1 для удобства
+GMItem["Вектор_1_FlashPool/Выдать_Спец_Тикеты_Flash_(item_ticket_01)"] = function(self)
+    GMItem["^FFFF00ULTRA_pup/SpecialTicket"]()
+end
+
 return GMItem
